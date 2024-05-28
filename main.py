@@ -11,6 +11,14 @@ from utils import save_state, load_state
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+def log_current_price(client):
+    try:
+        ticker = client.get_ticker(symbol='BTCUSDT')
+        current_price = ticker['lastPrice']
+        logging.info(f"Current BTC price: {current_price} USDT")
+    except Exception as e:
+        logging.error(f"Error fetching current BTC price: {e}")
+
 def main():
     logging.info("Starting the Bitcoin trading bot")
     client = get_client()
@@ -81,9 +89,14 @@ def main():
             save_state('data/state.json', {'usdt_balance': usdt_balance, 'btc_balance': btc_balance})
             logging.info("Saved state")
 
-            # Wait for next interval
-            logging.info("Waiting for next interval")
-            time.sleep(3600)  # Sleep for 1 hour
+            # Wait for next interval, logging every 5 minutes
+            interval = 3600  # Total wait time of 1 hour
+            check_interval = 300  # Check every 5 minutes
+            for remaining in range(interval, 0, -check_interval):
+                logging.info(f"Waiting for next interval. Time left: {remaining // 60} minutes")
+                log_current_price(client)
+                time.sleep(check_interval)
+
         except Exception as e:
             logging.error(f"Error: {e}")
             logging.info("Retrying in 1 minute")
