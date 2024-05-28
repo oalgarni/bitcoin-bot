@@ -1,0 +1,15 @@
+# Ignore virtual environment directory
+venv/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore data files
+data/state.json
+data/historical_data.csv
+
+# Ignore other unnecessary files
+*.log
+*.sqlite3
+.DS_Store
