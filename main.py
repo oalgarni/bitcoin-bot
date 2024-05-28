@@ -26,12 +26,16 @@ class ColorFormatter(logging.Formatter):
         message = logging.Formatter.format(self, record)
         return color + message
 
-# Configure colored logging
-handler = logging.StreamHandler()
-handler.setFormatter(ColorFormatter('%(asctime)s - %(levelname)s - %(message)s'))
+# Configure colored logging for btc_trading_bot logger
 logger = logging.getLogger('btc_trading_bot')
-logger.addHandler(handler)
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    handler.setFormatter(ColorFormatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logger.addHandler(handler)
 logger.setLevel(logging.INFO)
+
+# Ensure the root logger does not propagate to avoid duplication
+logger.propagate = False
 
 def log_current_price(client):
     try:
