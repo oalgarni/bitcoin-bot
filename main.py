@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import csv
 from datetime import datetime, timedelta, timezone
 from binance_client import get_client
 from data_processing import get_historical_data, preprocess_data, save_data_to_csv, load_data_from_csv
@@ -45,11 +46,28 @@ def log_current_price(client):
     except Exception as e:
         logger.error(f"Error fetching current BTC price: {e}")
 
+def load_trade_history(file_path):
+    trade_history = []
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                trade_history.append({
+                    'timestamp': row['timestamp'],
+                    'action': row['action'],
+                    'price': float(row['price']),
+                    'usdt_balance': float(row['usdt_balance']),
+                    'btc_balance': float(row['btc_balance']),
+                    'profit': float(row['profit']) if row['profit'] and row['profit'] != 'None' else None
+                })
+    return trade_history
+
 def main():
     logger.info("Starting the Bitcoin trading bot")
     client = get_client()
     usdt_balance = 1000  # Starting with 1000 USDT
     btc_balance = 0  # Starting with 0 BTC
+    stop_loss_threshold = 0.05  # 5% stop loss
 
     # Ensure the data directory exists
     if not os.path.exists('data'):
@@ -62,6 +80,9 @@ def main():
         usdt_balance = state.get('usdt_balance', usdt_balance)
         btc_balance = state.get('btc_balance', btc_balance)
         logger.info(f"Loaded previous state. USDT Balance: {usdt_balance} USDT, BTC Balance: {btc_balance} BTC")
+
+    # Load trade history if exists
+    trade_history = load_trade_history('data/trade_history.csv')
 
     # Fetch historical data from Binance API
     end_time = datetime.now(timezone.utc)
@@ -80,7 +101,7 @@ def main():
 
     # Load or train the model
     model_file = 'data/model.keras'
-    if os.path.exists(model_file):
+    if (os.path.exists(model_file)):
         model = load_model(model_file)
         logger.info("Model loaded from file")
     else:
@@ -90,7 +111,9 @@ def main():
 
     # Main trading loop
     previous_price = None
-    trade_history = []
+    if trade_history:
+        previous_price = trade_history[-1]['price']
+    
     while True:
         try:
             # Fetch latest data dynamically
@@ -102,10 +125,12 @@ def main():
 
             # Make prediction
             action = predict(model, latest_data)
+            if action == 'BUY' and usdt_balance == 0:
+                action = 'HOLD'
             logger.info(f"Predicted action: {action}")
 
             # Execute trade based on prediction
-            usdt_balance, btc_balance, profit, trade_price = execute_trade(client, action, usdt_balance, btc_balance, previous_price)
+            usdt_balance, btc_balance, profit, trade_price = execute_trade(client, action, usdt_balance, btc_balance, previous_price, stop_loss_threshold)
             trade_history.append({
                 'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
                 'action': action,
@@ -127,14 +152,16 @@ def main():
             logger.info("Saved state")
 
             # Save trade history
-            with open('data/trade_history.csv', 'w') as f:
-                f.write("timestamp,action,price,usdt_balance,btc_balance,profit\n")
+            with open('data/trade_history.csv', 'w', newline='') as f:
+                fieldnames = ['timestamp', 'action', 'price', 'usdt_balance', 'btc_balance', 'profit']
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
                 for trade in trade_history:
-                    f.write(f"{trade['timestamp']},{trade['action']},{trade['price']},{trade['usdt_balance']},{trade['btc_balance']},{trade['profit']}\n")
+                    writer.writerow(trade)
 
-            # Wait for next interval, logging every 5 minutes
-            interval = 3600  # Total wait time of 1 hour
-            check_interval = 300  # Check every 5 minutes
+            # Wait for next interval, logging every minute
+            interval = 300  # Total wait time of 5 minutes
+            check_interval = 60  # Check every minute
             for remaining in range(interval, 0, -check_interval):
                 logger.info(f"Waiting for next interval. Time left: {remaining // 60} minutes")
                 log_current_price(client)
