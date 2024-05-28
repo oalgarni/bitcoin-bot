@@ -22,7 +22,6 @@ def preprocess_data(data):
     data['timestamp'] = pd.to_datetime(data['timestamp'], unit='ms')
     data.set_index('timestamp', inplace=True)
     data = data[['open', 'high', 'low', 'close', 'volume']].astype(float)
-    # Compute additional technical indicators here
     logging.info("Data preprocessing complete")
     return data
 
@@ -32,10 +31,9 @@ def save_data_to_csv(data, file_path):
 
 def load_data_from_csv(file_path):
     logging.info(f"Loading data from {file_path}")
-    data = pd.read_csv(file_path, parse_dates=['timestamp'], index_col='timestamp')
-    # Rename columns if necessary
-    if 'Unnamed: 0' in data.columns:
-        data = data.rename(columns={'Unnamed: 0': 'timestamp'})
+    data = pd.read_csv(file_path, dtype={'timestamp': 'int64'})
+    data['timestamp'] = pd.to_datetime(data['timestamp'], unit='ms')
+    data.set_index('timestamp', inplace=True)
     logging.info("Data loaded from CSV")
     logging.info(f"Loaded data columns: {data.columns}")
     return data
