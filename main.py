@@ -165,9 +165,9 @@ def main():
                 for trade in trade_history:
                     writer.writerow(trade)
 
-            # Wait for next interval, logging every minute
-            interval = 300  # Total wait time of 5 minutes
-            check_interval = 60  # Check every minute
+            # Wait for next interval, logging every hour
+            interval = 3600  # Total wait time of 1 hour
+            check_interval = 600  # Check every 10 minutes
             for remaining in range(interval, 0, -check_interval):
                 logger.info(f"Waiting for next interval. Time left: {remaining // 60} minutes")
                 log_current_price(client)

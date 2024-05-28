@@ -8,6 +8,7 @@ __pycache__/
 # Ignore data files
 data/state.json
 data/historical_data.csv
+data/trade_history.csv
 
 # Ignore other unnecessary files
 *.log
