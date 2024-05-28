@@ -5,7 +5,7 @@ import csv
 from datetime import datetime, timedelta, timezone
 from binance_client import get_client
 from data_processing import get_historical_data, preprocess_data, save_data_to_csv, load_data_from_csv
-from model import train_model, load_model, predict
+from model import train_model, load_model, predict, evaluate_model
 from trading_logic import execute_trade
 from utils import save_state, load_state
 from colorama import init, Fore, Style
@@ -104,10 +104,16 @@ def main():
     if (os.path.exists(model_file)):
         model = load_model(model_file)
         logger.info("Model loaded from file")
+
+        # Evaluate model and log metrics
+        evaluate_model(data, model)
     else:
         model = train_model(data)
         model.save(model_file)
         logger.info("Model trained and saved")
+
+        # Evaluate model and log metrics
+        evaluate_model(data, model)
 
     # Main trading loop
     previous_price = None

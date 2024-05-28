@@ -1,5 +1,5 @@
 from tensorflow.keras.models import Sequential, load_model as keras_load_model
-from tensorflow.keras.layers import Dense, LSTM
+from tensorflow.keras.layers import Dense, LSTM, Input
 import numpy as np
 import logging
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
@@ -8,7 +8,8 @@ import os
 
 def create_model(input_shape):
     model = Sequential()
-    model.add(LSTM(50, return_sequences=True, input_shape=input_shape))
+    model.add(Input(shape=input_shape))
+    model.add(LSTM(50, return_sequences=True))
     model.add(LSTM(50))
     model.add(Dense(1, activation='linear'))
     model.compile(optimizer='adam', loss='mean_squared_error')
@@ -22,6 +23,21 @@ def train_model(data):
     history = model.fit(X, y, epochs=10, batch_size=32, verbose=1)
     logging.info(f"Model training complete with loss: {history.history['loss'][-1]}")
     
+    # Evaluate model after training
+    evaluate_model(data, model)
+    
+    # Plot and save training metrics
+    plot_training_metrics(history)
+    
+    return model
+
+def evaluate_model(data, model):
+    # Configure logging
+    logger = logging.getLogger('btc_trading_bot')
+    logger.setLevel(logging.INFO)
+    
+    X, y = prepare_data_for_training(data)
+    
     # Convert continuous target to discrete classes
     y_classes = convert_to_classes(y)
     y_pred = model.predict(X)
@@ -32,14 +48,10 @@ def train_model(data):
     f1 = f1_score(y_classes, y_pred_classes, average='weighted')
     cm = confusion_matrix(y_classes, y_pred_classes, labels=[-1, 0, 1])
     
-    logging.info(f"Training Accuracy: {accuracy:.2f}%")
-    logging.info(f"Training F1 Score: {f1:.2f}")
-    logging.info(f"Confusion Matrix:\n{cm}")
-
-    # Plot and save training metrics
-    plot_training_metrics(history)
-    
-    return model
+    logger.info(f"Model Evaluation Metrics:")
+    logger.info(f"Accuracy: {accuracy:.2f}%")
+    logger.info(f"F1 Score: {f1:.2f}")
+    logger.info(f"Confusion Matrix:\n{cm}")
 
 def prepare_data_for_training(data):
     sequence_length = 60  # Number of timesteps to consider for prediction
