@@ -1,0 +1,5 @@
+home = /Users/aalgarni/.pyenv/versions/3.12.3/bin
+include-system-site-packages = false
+version = 3.12.3
+executable = /Users/aalgarni/.pyenv/versions/3.12.3/bin/python3.12
+command = /Users/aalgarni/.pyenv/versions/3.12.3/bin/python -m venv /Users/aalgarni/Documents/GitHub/bitcoin-bot/venv

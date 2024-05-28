@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from binance_client import get_client
 from data_processing import get_historical_data, preprocess_data, save_data_to_csv, load_data_from_csv
-from model import train_model, predict
+from model import train_model, load_model, predict
 from trading_logic import execute_trade
 from utils import save_state, load_state
 
@@ -49,9 +49,15 @@ def main():
         logging.error(f"Error during data preprocessing: {e}")
         return
 
-    # Train the model
-    model = train_model(data)
-    logging.info("Model training complete")
+    # Load or train the model
+    model_file = 'data/model.keras'
+    if os.path.exists(model_file):
+        model = load_model(model_file)
+        logging.info("Model loaded from file")
+    else:
+        model = train_model(data)
+        model.save(model_file)
+        logging.info("Model trained and saved")
 
     # Main trading loop
     while True:

@@ -2,3 +2,5 @@ pandas
 numpy
 tensorflow
 python-binance
+scikit-learn
+matplotlib
