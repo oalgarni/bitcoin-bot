@@ -30,16 +30,16 @@ def execute_trade(client, action, usdt_balance, btc_balance, buy_price, stop_los
             profit = usdt_amount - (btc_balance * buy_price)
             btc_balance = 0
             usdt_balance += usdt_amount
+            action = 'SELL'
             logger.info(Fore.GREEN + f"Executed HOLD as SELL at {price} USDT/BTC, USDT amount: {usdt_amount}, PROFIT: {profit}")
+        elif buy_price and (price < buy_price * (1 - stop_loss_threshold)):  # Stop-loss threshold
+            usdt_amount = btc_balance * price
+            profit = usdt_amount - (btc_balance * buy_price)
+            btc_balance = 0
+            usdt_balance += usdt_amount
+            action = 'SELL'
+            logger.info(Fore.RED + f"Stop Loss Triggered. Sold BTC at {price} USDT/BTC, USDT amount: {usdt_amount}, LOSS: {profit}")
         else:
             logger.info("Holding position")
 
-    # Check for stop loss
-    if btc_balance > 0 and buy_price and price < buy_price * (1 - stop_loss_threshold):
-        usdt_amount = btc_balance * price
-        profit = usdt_amount - (btc_balance * buy_price)
-        btc_balance = 0
-        usdt_balance += usdt_amount
-        logger.info(Fore.RED + f"Stop Loss Triggered. Sold BTC at {price} USDT/BTC, USDT amount: {usdt_amount}, LOSS: {profit}")
-
-    return usdt_balance, btc_balance, profit, price, buy_price
+    return usdt_balance, btc_balance, profit, price, buy_price, action

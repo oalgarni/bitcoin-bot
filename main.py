@@ -134,7 +134,7 @@ def main():
             logger.info(f"Predicted action: {action}")
 
             # Execute trade based on prediction
-            usdt_balance, btc_balance, profit, trade_price, buy_price = execute_trade(client, action, usdt_balance, btc_balance, buy_price, stop_loss_threshold)
+            usdt_balance, btc_balance, profit, trade_price, buy_price, action = execute_trade(client, action, usdt_balance, btc_balance, buy_price, stop_loss_threshold)
             trade_history.append({
                 'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
                 'action': action,
