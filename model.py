@@ -70,9 +70,9 @@ def predict(model, latest_data):
     X = prepare_latest_data(latest_data)
     prediction = model.predict(X)
     logging.info(f"Prediction: {prediction[0][0]}")
-    if prediction > 0.01:
+    if prediction > 0.003:  # Adjusted threshold for BUY
         return 'BUY'
-    elif prediction < -0.01:
+    elif prediction < -0.003:  # Adjusted threshold for SELL
         return 'SELL'
     else:
         return 'HOLD'

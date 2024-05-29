@@ -67,6 +67,7 @@ def main():
     client = get_client()
     usdt_balance = 1000  # Starting with 1000 USDT
     btc_balance = 0  # Starting with 0 BTC
+    buy_price = None  # Initialize buy price
     stop_loss_threshold = 0.05  # 5% stop loss
 
     # Ensure the data directory exists
@@ -79,7 +80,8 @@ def main():
     if state:
         usdt_balance = state.get('usdt_balance', usdt_balance)
         btc_balance = state.get('btc_balance', btc_balance)
-        logger.info(f"Loaded previous state. USDT Balance: {usdt_balance} USDT, BTC Balance: {btc_balance} BTC")
+        buy_price = state.get('buy_price', buy_price)
+        logger.info(f"Loaded previous state. USDT Balance: {usdt_balance} USDT, BTC Balance: {btc_balance} BTC, Buy Price: {buy_price}")
 
     # Load trade history if exists
     trade_history = load_trade_history('data/trade_history.csv')
@@ -101,7 +103,7 @@ def main():
 
     # Load or train the model
     model_file = 'data/model.keras'
-    if (os.path.exists(model_file)):
+    if os.path.exists(model_file):
         model = load_model(model_file)
         logger.info("Model loaded from file")
 
@@ -116,10 +118,6 @@ def main():
         evaluate_model(data, model)
 
     # Main trading loop
-    previous_price = None
-    if trade_history:
-        previous_price = trade_history[-1]['price']
-    
     while True:
         try:
             # Fetch latest data dynamically
@@ -136,7 +134,7 @@ def main():
             logger.info(f"Predicted action: {action}")
 
             # Execute trade based on prediction
-            usdt_balance, btc_balance, profit, trade_price = execute_trade(client, action, usdt_balance, btc_balance, previous_price, stop_loss_threshold)
+            usdt_balance, btc_balance, profit, trade_price, buy_price = execute_trade(client, action, usdt_balance, btc_balance, buy_price, stop_loss_threshold)
             trade_history.append({
                 'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
                 'action': action,
@@ -151,10 +149,9 @@ def main():
                 else:
                     logger.info(Fore.RED + f"Trade Result: LOSS of {abs(profit):.2f} USDT")
             logger.info(f"Executed trade. USDT Balance: {usdt_balance} USDT, BTC Balance: {btc_balance} BTC")
-            previous_price = trade_price
 
             # Save state
-            save_state('data/state.json', {'usdt_balance': usdt_balance, 'btc_balance': btc_balance})
+            save_state('data/state.json', {'usdt_balance': usdt_balance, 'btc_balance': btc_balance, 'buy_price': buy_price})
             logger.info("Saved state")
 
             # Save trade history
