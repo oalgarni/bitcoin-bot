@@ -1,0 +1,5 @@
+* train the model in diffrente time frame intervals,
+- 10 minutes
+- 30 minutes
+- 1 hour
+- 6 hours
